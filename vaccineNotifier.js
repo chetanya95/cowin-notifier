@@ -30,10 +30,7 @@ async function checkAvailability() {
         var toEmail = entry.to_email;
         console.log("Finding available slots for " + toEmail + " of age " + age + " by " + findBy + " " + findValue + " date " + currentDate);
 
-        const isSlotFound = await getSlotsForDate(currentDate, findBy, findValue, age, toEmail);
-        if(isSlotFound === true){
-            break;
-        }
+        await getSlotsForDate(currentDate, findBy, findValue, age, toEmail);
     };
 }
 
