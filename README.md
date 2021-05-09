@@ -11,7 +11,7 @@ Important: Please specify the cron schedule in `vaccineNotifier.js` responsibly 
 Step 1) Enable application access on your gmail with steps given here:
 https://support.google.com/accounts/answer/185833?p=InvalidSecondFactor&visit_id=637554658548216477-2576856839&rd=1  
 \
-Step 2) Enter the details in the file `env` file present in the same folder.
+Step 2) Enter the details in the file `.env` file present in the same folder.
 \
 \
 Step 3) Add the entries for different people in `find_entries.json` file. For each person, below entries are needed.
@@ -21,7 +21,10 @@ Step 3) Add the entries for different people in `find_entries.json` file. For ea
 `to_email`: a valid email address on which the email alerts are required to be sent.
 \
 \
-Step 4) On your terminal run: `npm i && pm2 start vaccineNotifier.js -l ./.log`.
+Step 4) On your terminal run: 
+`npm i`
+`npm install -g pm2`
+`pm2 start vaccineNotifier.js -l ./.log`.
 \
 \
 To close the app run: `pm2 stop vaccineNotifier.js && pm2 delete vaccineNotifier.js`.

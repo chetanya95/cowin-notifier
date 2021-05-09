@@ -1,13 +1,15 @@
 require('dotenv').config()
-const moment = require('moment');
+var moment = require('moment-timezone');
 const cron = require('node-cron');
 const notifier = require('./notifier');
 const findEntries = require('./find_entries.json');
 const fetch = require('node-fetch');
 
-console.log("Entries: " + JSON.stringify(findEntries));
 
 async function main() {
+    console.log('Vaccine availability checker started.');
+    console.log("Entries: " + JSON.stringify(findEntries));
+    await checkAvailability();
     try {
         cron.schedule('*/5 * * * *', async () => { // every 5 mins
             await checkAvailability();
@@ -19,20 +21,18 @@ async function main() {
 }
 
 async function checkAvailability() {
-    let datesArray = fetchNext10Days();
-
+    console.log("checking availalbility");
+    const currentDate = fetchCurrentDate();
     for(entry of findEntries){
         var findBy = entry.find_by;
         var findValue = entry.find_value;
         var age = entry.age;
         var toEmail = entry.to_email;
-        console.log("Finding available slots for " + toEmail + " of age " + age + " by " + findBy + " " + findValue);
+        console.log("Finding available slots for " + toEmail + " of age " + age + " by " + findBy + " " + findValue + " date " + currentDate);
 
-        for(date of datesArray){
-            const isSlotFound = await getSlotsForDate(date, findBy, findValue, age, toEmail);
-            if(isSlotFound === true){
-                break;
-            }
+        const isSlotFound = await getSlotsForDate(currentDate, findBy, findValue, age, toEmail);
+        if(isSlotFound === true){
+            break;
         }
     };
 }
@@ -55,6 +55,7 @@ async function getSlotsForDate(date, findBy, findValue, age, toEmail) {
     try{
         const response = await fetch(url, { method: 'GET', headers: headers });
         const responseJSON = await response.json();
+        //console.log("responseJSON: " + JSON.stringify(responseJSON));
         const centers = responseJSON.centers;
         for(let center of centers){
             let sessions = center.sessions;
@@ -62,7 +63,7 @@ async function getSlotsForDate(date, findBy, findValue, age, toEmail) {
             //console.log('sessions:' + JSON.stringify(sessions));
             if(sessions){
                 let validSlots = sessions.filter(session => session.min_age_limit <= age && session.available_capacity > 0);
-                console.log({ date: date, center: center.name, validSlots: validSlots.length });
+                console.log("center: " + center.name + ", validSlots: " + validSlots.length);
                 if (validSlots.length > 0) {
                     console.log("Valid vaccination slot(s) found for user " + toEmail + ", in center " +  center.name + ", sending an email");
                     notifyMe(center, toEmail);
@@ -86,6 +87,13 @@ async function notifyMe(center, toEmail) {
     })
 };
 
+function fetchCurrentDate(){
+    const dateIST = new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Kolkata"}));
+    //console.log("dateIST: " + dateIST);
+    const actualMonth = dateIST.getMonth() + 1;
+    return dateIST.getDate() + "-" + actualMonth + "-" + dateIST.getFullYear();
+}
+
 function fetchNext10Days() {
     let dates = [];
     let today = moment();
@@ -97,6 +105,4 @@ function fetchNext10Days() {
     return dates;
 }
 
-
-main()
-    .then(() => { console.log('Vaccine availability checker started.'); });
+main();
